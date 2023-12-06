@@ -6,6 +6,7 @@ use std::{fs, str::Lines};
 use indicatif::{ProgressBar, ProgressStyle};
 
 const PART_ONE: bool = false;
+const USE_RAYON: bool = false;
 
 #[derive(Debug)]
 struct SourceDestData {
@@ -210,8 +211,6 @@ fn main() {
     let input = fs::read_to_string("./assets/input2.txt").unwrap();
     let processed_data = process_input(input);
 
-    let mut min_loc = std::u64::MAX;
-
     let bar = ProgressBar::new(processed_data.seeds.len().try_into().unwrap());
     bar.set_style(
         ProgressStyle::default_bar()
@@ -221,45 +220,50 @@ fn main() {
 
     let now = Instant::now();
 
-    for seed in processed_data.seeds {
-        bar.inc(1);
-        let soil = processed_data.seeds_to_soil_map.get_dest(&seed);
-        let fert = processed_data.soil_to_fertilizer_map.get_dest(&soil);
-        let water = processed_data.fertilizer_to_water_map.get_dest(&fert);
-        let light = processed_data.water_to_light_map.get_dest(&water);
-        let temp = processed_data.light_to_temp_map.get_dest(&light);
-        let humi = processed_data.temp_to_humi_map.get_dest(&temp);
-        let loc = processed_data.humi_to_loc_map.get_dest(&humi);
+    let mut min_loc = std::u64::MAX;
 
-        if loc < min_loc {
-            min_loc = loc;
+    if USE_RAYON {
+        min_loc = {
+            let seeds = &processed_data.seeds;
+            let seeds_to_soil_map = &processed_data.seeds_to_soil_map;
+            let soil_to_fertilizer_map = &processed_data.soil_to_fertilizer_map;
+            let fertilizer_to_water_map = &processed_data.fertilizer_to_water_map;
+            let water_to_light_map = &processed_data.water_to_light_map;
+            let light_to_temp_map = &processed_data.light_to_temp_map;
+            let temp_to_humi_map = &processed_data.temp_to_humi_map;
+            let humi_to_loc_map = &processed_data.humi_to_loc_map;
+
+            seeds
+                .par_iter()
+                .map(|seed| {
+                    bar.inc(1);
+                    let soil = seeds_to_soil_map.get_dest(seed);
+                    let fert = soil_to_fertilizer_map.get_dest(&soil);
+                    let water = fertilizer_to_water_map.get_dest(&fert);
+                    let light = water_to_light_map.get_dest(&water);
+                    let temp = light_to_temp_map.get_dest(&light);
+                    let humi = temp_to_humi_map.get_dest(&temp);
+                    humi_to_loc_map.get_dest(&humi)
+                })
+                .reduce(|| u64::MAX, |min_loc, loc| min(min_loc, loc))
+        };
+    } else {
+        for seed in processed_data.seeds {
+            bar.inc(1);
+            let soil = processed_data.seeds_to_soil_map.get_dest(&seed);
+            let fert = processed_data.soil_to_fertilizer_map.get_dest(&soil);
+            let water = processed_data.fertilizer_to_water_map.get_dest(&fert);
+            let light = processed_data.water_to_light_map.get_dest(&water);
+            let temp = processed_data.light_to_temp_map.get_dest(&light);
+            let humi = processed_data.temp_to_humi_map.get_dest(&temp);
+            let loc = processed_data.humi_to_loc_map.get_dest(&humi);
+
+            if loc < min_loc {
+                min_loc = loc;
+            }
         }
     }
 
-    // let min_loc = {
-    //     let seeds = &processed_data.seeds;
-    //     let seeds_to_soil_map = &processed_data.seeds_to_soil_map;
-    //     let soil_to_fertilizer_map = &processed_data.soil_to_fertilizer_map;
-    //     let fertilizer_to_water_map = &processed_data.fertilizer_to_water_map;
-    //     let water_to_light_map = &processed_data.water_to_light_map;
-    //     let light_to_temp_map = &processed_data.light_to_temp_map;
-    //     let temp_to_humi_map = &processed_data.temp_to_humi_map;
-    //     let humi_to_loc_map = &processed_data.humi_to_loc_map;
-
-    //     seeds
-    //         .par_iter()
-    //         .map(|seed| {
-    //             bar.inc(1);
-    //             let soil = seeds_to_soil_map.get_dest(seed);
-    //             let fert = soil_to_fertilizer_map.get_dest(&soil);
-    //             let water = fertilizer_to_water_map.get_dest(&fert);
-    //             let light = water_to_light_map.get_dest(&water);
-    //             let temp = light_to_temp_map.get_dest(&light);
-    //             let humi = temp_to_humi_map.get_dest(&temp);
-    //             humi_to_loc_map.get_dest(&humi)
-    //         })
-    //         .reduce(|| u64::MAX, |min_loc, loc| min(min_loc, loc))
-    // };
     bar.finish();
 
     println!("Took {}s to compute", now.elapsed().as_secs());

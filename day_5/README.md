@@ -1,10 +1,10 @@
-# Observation
+# Observation (Part 2)
 
-### Using non-binary search solution (release mode)
+### Using non-binary search solution
 
 Processed 6.2M seeds/s
 
-### Using binary search solution (release mode)
+### Using binary search solution
 
 Processed 16.3M seeds/s
 2 min
@@ -12,3 +12,7 @@ Processed 16.3M seeds/s
 ### Binary search in dev mode
 
 18 minute
+
+### Binary search with rayon
+
+Processed 10.27M seed/s
