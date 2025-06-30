@@ -1,0 +1,16 @@
+pipeline:
+  name: test-remote-creation
+  identifier: testremotecreation
+  tags: {}
+  projectIdentifier: qa
+  orgIdentifier: DoNotDeleteBhumij
+  stages:
+    - stage:
+        name: s1
+        identifier: s1
+        description: ""
+        type: Pipeline
+        spec:
+          org: DoNotDeleteBhumij
+          pipeline: qatestgh
+          project: qa
