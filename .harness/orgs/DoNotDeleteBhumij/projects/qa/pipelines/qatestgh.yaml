@@ -1,0 +1,22 @@
+pipeline:
+  name: qa-test-gh
+  identifier: qatestgh
+  tags: {}
+  projectIdentifier: qa
+  orgIdentifier: DoNotDeleteBhumij
+  stages:
+    - stage:
+        name: cs1
+        identifier: cs1
+        description: ""
+        type: Custom
+        spec:
+          execution:
+            steps:
+              - step:
+                  type: Wait
+                  name: Wait_1
+                  identifier: Wait_1
+                  spec:
+                    duration: 10m
+        tags: {}
